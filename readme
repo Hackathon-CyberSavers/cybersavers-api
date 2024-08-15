@@ -1,0 +1,9 @@
+Para instalar as depências deve rodar o comando:
+
+    - pip install -r requirements.txt
+
+OBS:. Isso deve ser feito depois de ter criado a sua env (Recomendo que o nome da env seja 'venv' por conta do arquivo .gitignore)
+
+Para rodar a aplicação
+
+    - python3 run.py (Linux)
