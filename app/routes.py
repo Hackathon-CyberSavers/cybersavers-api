@@ -1,8 +1,13 @@
+import jwt
+from datetime import datetime
+from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, jsonify, request
 from .models import User
 from bson import ObjectId
 from . import utils
+from app.config import Config
+
 
 main = Blueprint('main', __name__)
 
@@ -94,13 +99,23 @@ def login():
     
     hashed_password = user_found['password']
 
-    same_password = check_password_hash(hashed_password, pwd)
-
-    if not same_password:
+    if not check_password_hash(hashed_password, pwd):
         return jsonify({"error": 'Senha incorreta'}), 401
-
     
-    return jsonify({"message": "Login realizado com sucesso!"}), 200
+
+    token = jwt.encode({
+        'sub': str(user_found['_id']),
+        'exp': datetime.now() + timedelta(hours=24) # 24h para o token expirar
+    }, Config.SECRET_KEY, algorithm='HS256')
+
+    data = {
+        "id": str(user_found['_id']),
+        "name": user_found['name'],
+        "email": user_found['email'],
+        "token": token
+    }
+    
+    return jsonify({"message": "Login realizado com sucesso!", "data": data}), 200
 
         
 
