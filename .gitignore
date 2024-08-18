@@ -1,5 +1,6 @@
 .venv
 .env
+venv
 
 # Arquivos de cache do Python
 __pycache__/
@@ -7,4 +8,4 @@ __pycache__/
 *.pyo
 *.pyd
 
-*.pyc
+*.pyc 
