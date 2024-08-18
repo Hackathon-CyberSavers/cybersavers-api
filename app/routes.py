@@ -1,19 +1,54 @@
 import jwt
-from datetime import datetime
-from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, jsonify, request
-from .models import User
+from email_validator import validate_email
+from datetime import timedelta
+from datetime import datetime
+from functools import wraps
 from bson import ObjectId
-from . import utils
+
+from .models import User
 from app.config import Config
 
 
 main = Blueprint('main', __name__)
 
+# Decoradores
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        # token = token.replace('Bearer ', "")
+
+        if not token:
+            return jsonify({"error": "Invalid Token"}), 403
+        
+        try:
+            data = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
+            current_user = User.get_user_by_id(ObjectId(data['sub']))  # Obter usuário pelo ID
+    
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expirado"}), 401
+        
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Token inválido"}), 401
+        
+        return f(current_user, *args, **kwargs)
+    
+    return decorated
+
+
+
+
+
+
+
+
+
 # Rotas para usuários
 @main.route('/users', methods=['GET'])
-def get_users():
+@token_required
+def get_users(arg):
     users = User.get_all_users()
     user_list = []
 
@@ -43,7 +78,7 @@ def create_user():
     if not data['password']:
         return jsonify({"error": 'Senha não pode ser nula'}), 400
     
-    if  not utils.is_valid_email(data['email']):
+    if  not validate_email(data['email']):
         return jsonify({"error": 'E-mail inválido'}), 400
     
     if User.get_user_by_email(data['email']):
@@ -119,39 +154,31 @@ def login():
 
         
 
-@main.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-
-
-
-
-
 # Rotas para o assistente
-@main.route('/weather', methods=['GET'])
-def weather():
-    city = request.args.get('city')
-    if not city:
-        flash('Por favor, insira o nome da cidade.')
-        return redirect(url_for('home'))
+# @main.route('/weather', methods=['GET'])
+# def weather():
+#     city = request.args.get('city')
+#     if not city:
+#         flash('Por favor, insira o nome da cidade.')
+#         return redirect(url_for('home'))
     
-    weather_data = assistant.get_weather(city)
-    if "error" in weather_data:
-        flash(weather_data["error"])
-        return redirect(url_for('home'))
+#     weather_data = assistant.get_weather(city)
+#     if "error" in weather_data:
+#         flash(weather_data["error"])
+#         return redirect(url_for('home'))
     
-    planting_advice = assistant.can_plant(weather_data["temp"], weather_data["weather"])
-    return render_template('weather.html', weather_data=weather_data, planting_advice=planting_advice)
+#     planting_advice = assistant.can_plant(weather_data["temp"], weather_data["weather"])
+#     return render_template('weather.html', weather_data=weather_data, planting_advice=planting_advice)
 
-@main.route('/check_ph', methods=['POST'])
-def check_ph():
-    try:
-        ph_level = float(request.form.get('ph'))
-    except ValueError:
-        flash('Por favor, insira um valor numérico válido para o pH.')
-        return redirect(url_for('home'))
+# @main.route('/check_ph', methods=['POST'])
+# def check_ph():
+#     try:
+#         ph_level = float(request.form.get('ph'))
+#     except ValueError:
+#         flash('Por favor, insira um valor numérico válido para o pH.')
+#         return redirect(url_for('home'))
     
-    advice = assistant.check_ph(ph_level)
-    return render_template('ph.html', ph_level=ph_level, advice=advice)
+#     advice = assistant.check_ph(ph_level)
+#     return render_template('ph.html', ph_level=ph_level, advice=advice)
+
+
