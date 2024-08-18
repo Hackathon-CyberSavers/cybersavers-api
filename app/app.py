@@ -1,9 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from assistant import PlantingAssistant
 from models import db, User
 
-login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
