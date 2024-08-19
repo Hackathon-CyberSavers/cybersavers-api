@@ -6,7 +6,7 @@ from datetime import timedelta
 from datetime import datetime
 from functools import wraps
 from bson import ObjectId
-
+from app.models.product import ProdutoAgricola
 from .models import User
 from app.config import Config
 
@@ -151,6 +151,93 @@ def login():
     }
     
     return jsonify({"message": "Login realizado com sucesso!", "data": data}), 200
+
+
+
+
+
+
+
+
+
+
+
+# Rota para obter todos os produtos
+@main.route('/produtos', methods=['GET'])
+@token_required
+def get_produtos():
+    produtos = ProdutoAgricola.obter_todos_produtos()
+    produto_list = []
+
+    for produto in produtos:
+        produto['_id'] = str(produto['_id'])
+        produto_list.append(produto)
+
+    return jsonify({"data": produto_list})
+
+# Rota para obter um produto específico pelo ID
+@main.route('/produtos/<produto_id>', methods=['GET'])
+@token_required
+def get_produto(produto_id):
+    produto = ProdutoAgricola.obter_produto_por_id(ObjectId(produto_id))
+
+    if produto:
+        produto['_id'] = str(produto['_id'])
+        return jsonify(produto)
+    
+    return jsonify({"error": "Produto não encontrado"}), 404
+
+# Rota para criar um novo produto
+@main.route('/produtos', methods=['POST'])
+@token_required
+def create_produto():
+    data = request.json
+
+    if not data.get('nome'):
+        return jsonify({"error": 'Nome não pode ser nulo'}), 400
+    
+    if not data.get('preco'):
+        return jsonify({"error": 'Preço não pode ser nulo'}), 400
+    
+    if not data.get('estoque'):
+        return jsonify({"error": 'Estoque não pode ser nulo'}), 400
+    
+    produto = ProdutoAgricola.from_dict(data)
+    ProdutoAgricola.criar_produto(produto.to_dict())
+
+    return jsonify({"message": 'Produto criado!'}), 201
+
+# Rota para atualizar um produto existente
+@main.route('/produtos/<produto_id>', methods=['PUT'])
+@token_required
+def update_produto(produto_id):
+    data = request.json
+    produto = ProdutoAgricola.from_dict(data)
+    result = ProdutoAgricola.atualizar_produto(ObjectId(produto_id), produto.to_dict())
+
+    if result.matched_count:
+        return jsonify({"message": "Produto atualizado!"}), 200
+    
+    return jsonify({"error": "Produto não encontrado"}), 404
+
+# Rota para deletar um produto
+@main.route('/produtos/<produto_id>', methods=['DELETE'])
+@token_required
+def delete_produto(produto_id):
+    result = ProdutoAgricola.deletar_produto(ObjectId(produto_id))
+    if result.deleted_count:
+        return jsonify({"message": "Produto excluído!"}), 200
+    
+    return jsonify({"error": "Produto não encontrado"}), 404
+
+#Matheuzão da uma olhada nas rotas de autenticação de usuário, a maioria lá não tem o @token_required, eu acho que todos tinham que ter, assim como os produtos, veja se é isso mesmo. vlw
+
+
+
+
+
+
+
 
         
 '''
