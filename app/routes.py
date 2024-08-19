@@ -6,7 +6,7 @@ from datetime import timedelta
 from datetime import datetime
 from functools import wraps
 from bson import ObjectId
-
+from app.models.product import ProdutoAgricola
 from .models import User
 from app.config import Config
 
