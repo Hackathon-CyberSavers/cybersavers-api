@@ -153,6 +153,9 @@ def login():
     return jsonify({"message": "Login realizado com sucesso!", "data": data}), 200
 
         
+'''
+
+'''
 
 # Rotas para o assistente
 # @main.route('/weather', methods=['GET'])

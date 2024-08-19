@@ -8,6 +8,9 @@ flask-mongoengine==1.0.0
 Flask-PyMongo==2.3.0
 Flask-RESTful==0.3.10
 Flask-WTF==1.2.1
+Flask-CORS==3.1.0  # Adicionado
+Flask-JWT-Extended==4.4.4  # Adicionado
+gunicorn==20.1.0 # Adicionado
 idna==3.7
 itsdangerous==2.2.0
 Jinja2==3.1.4

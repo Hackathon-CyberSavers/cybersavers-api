@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from assistant import PlantingAssistant
+from commodity_price import 
 from models import db, User
 
 
@@ -56,3 +57,23 @@ def check_ph():
     
     advice = assistant.check_ph(ph_level)
     return render_template('ph.html', ph_level=ph_level, advice=advice)
+
+# Endpoint para obter o preço da commodity em tempo real
+@app.route('/api/commodity-price', methods=['GET'])
+@login_required  # Protege a rota com autenticação
+def get_commodity_price_endpoint(name):
+    """
+    Endpoint para obter o valor de uma commodity em tempo real, incluindo conversão para BRL.
+
+    Args:
+    name (str): Nome da commodity a ser pesquisada.
+
+    Returns:
+    json: Retorna o preço atual da commodity em USD, BRL, a taxa de câmbio e a data.
+    """
+    commodity_data = get_commodity_price(name)
+
+    if "error" in commodity_data:
+        return jsonify(commodity_data), 404  # Retorna erro 404 se não encontrar os dados
+
+    return jsonify(commodity_data), 200  # Retorna os dados da commodity em formato JSON
