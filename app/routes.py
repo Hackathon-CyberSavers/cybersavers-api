@@ -59,6 +59,7 @@ def get_users(arg):
     return jsonify({"data": user_list})
 
 @main.route('/users/<user_id>', methods=['GET'])
+@token_required
 def get_user(user_id):
     user = User.get_user_by_id(ObjectId(user_id))
 
@@ -69,6 +70,7 @@ def get_user(user_id):
     return jsonify({"error": "Usuário não encontrado"}), 404
 
 @main.route('/users', methods=['POST'])
+@token_required
 def create_user():
     data = request.json
 
@@ -93,6 +95,7 @@ def create_user():
     return jsonify({"message": 'Usuário criado!'}), 201
 
 @main.route('/users/<user_id>', methods=['PUT'])
+@token_required
 def update_user(user_id):
     data = request.json
     user = User.from_dict(data)
@@ -104,6 +107,7 @@ def update_user(user_id):
     return jsonify({"error": "Usuário não encontrado"}), 404
 
 @main.route('/users/<user_id>', methods=['DELETE'])
+@token_required
 def delete_user(user_id):
     result = User.delete_user(ObjectId(user_id))
     if result.deleted_count:
