@@ -10,7 +10,7 @@ openai = OpenAI()
 
 def create_app():
     app = Flask(__name__)
-    app.config['OPENAI_API_KEY'] = "sk-svcacct-Rl7jaI6T2sEFxEdluXjtLm05ahX4FJK9v_aY9SuOmFcVDwFX8T3BlbkFJTakq1bC9G-LyhltzOsLrMx_9nuM2DCnBwyrkfJl4bixJsopDwA"
+    app.config['OPENAI_API_KEY'] = "sk-3y0NvpQDKpciuOZMMvoxcsu_gfMp0D21tyZpOm0rFaT3BlbkFJWqipqwbxed5xVeCt1BUnPrCSrIPcLFx_c_NEIF8XwA"
     app.config.from_object(Config)
     
     mongo.init_app(app)
