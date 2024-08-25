@@ -10,7 +10,7 @@ from app.models.product import Product
 from .models import User
 from app.config import Config
 from . import openai
-
+from assistant import *
 
 main = Blueprint('main', __name__)
 
@@ -239,6 +239,9 @@ def obter_produtos_em_estoque():
     return jsonify({"dados": lista_produtos})
 
 
+
+
+#Rota Chat GPT 
 @main.route('/generate-text', methods=['POST'])
 def generate_text():
 
