@@ -1,0 +1,106 @@
+/* @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Righteous&family=Sarala:wght@400;700&display=swap');
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+boxy {
+    font-family: Arial, Helvetica, sans-serif;
+    /* background: linear-gradient(68.15deg, #2F2325 16.62%, #8E5D52 85.61%);
+
+}
+:root{
+    --azul-esverdeado: #eca53a;
+    --verde: #2f9364;
+    --laranja: #ff7c37;
+    --degrade-btn: linear-gradient(greenyellow, rgb(64, 211, 150));
+    --color-p: #a1a1a1;
+    --color-p-2: #868585;
+}
+
+.background-nav {
+    background: var(--azul-esverdeado);
+}
+
+/* Classes reutilizáveis 
+.container {
+    max-width: 1440px;
+    padding: 0 5%;
+    margin: 0 auto;
+}
+
+/* Bottão início
+
+.btn-start {
+    padding: 10px 25px;
+    color: white;
+    border: none;
+    cursor: pointer; /* Pointer?
+    background-image:  var(--degrade-btn);
+}
+
+/* Nav
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    padding: 20px 0;
+}
+
+/* Logo
+
+.logo a {
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+}
+
+.ul {
+    display: flex;
+    align-items: center;
+}
+
+.ul li {
+    margin: 0 35px;
+    font-size: 15px;
+}
+
+.ul li a {
+    color: white;
+}
+
+/* Main
+
+main .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.texto-central {
+    width: 50%;
+    color: wheat;
+}
+
+.texto-central h1 {
+    font-size: 4.5rem;
+}
+.texto-central div{
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.imagem-central {
+    width: 50%;
+}
+
+.imagem-central img {
+    width: 100%;
+} */

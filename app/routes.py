@@ -6,10 +6,11 @@ from datetime import timedelta
 from datetime import datetime
 from functools import wraps
 from bson import ObjectId
-from app.models.product import AgriculturalProduct, ProdutoAgricola
+from app.models.product import Product
 from .models import User
 from app.config import Config
-
+from . import openai
+from assistant import *
 
 main = Blueprint('main', __name__)
 
@@ -240,6 +241,29 @@ def obter_produtos_em_estoque():
 
 
 
+#Rota Chat GPT 
+@main.route('/generate-text', methods=['POST'])
+def generate_text():
+
+    data = request.json
+    msg = data['msg']
+
+    completion = openai.client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system",
+             "content": "Voce é muito legal!"},
+            {"role": "user", "content": msg}
+        ]
+    )
+
+
+
+    return jsonify({'message': completion.choices[0].message.content}),200
+
+
+
+    
 
 
 
