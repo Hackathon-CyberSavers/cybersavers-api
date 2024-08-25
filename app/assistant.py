@@ -1,8 +1,9 @@
 from flask import request
+from config import *
 
 class PlantingAssistant:
     def __init__(self, api_key):
-        self.api_key = api_key
+        self.api_key = Config.WEATHER_API_KEY
 
     def get_weather(self, city):
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={self.api_key}&units=metric"
