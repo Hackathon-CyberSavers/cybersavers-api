@@ -184,7 +184,7 @@ def login():
 @main.route('/produtos', methods=['GET'])
 @token_required
 def obter_produtos():
-    produtos = AgriculturalProduct.get_all_products()
+    produtos = Product.get_all_products()
     lista_produtos = []
 
     for produto in produtos:
@@ -197,7 +197,7 @@ def obter_produtos():
 @main.route('/produtos/<produto_id>', methods=['GET'])
 @token_required
 def obter_produto(produto_id):
-    produto = AgriculturalProduct.get_product_by_id(ObjectId(produto_id))
+    produto = Product.get_product_by_id(ObjectId(produto_id))
 
     if produto:
         produto['_id'] = str(produto['_id'])
@@ -210,8 +210,8 @@ def obter_produto(produto_id):
 @token_required
 def criar_produto():
     dados = request.json
-    novo_produto = AgriculturalProduct.from_dict(dados)
-    produto_id = AgriculturalProduct.create_product(novo_produto.to_dict())
+    novo_produto = Product.from_dict(dados)
+    produto_id = Product.create_product(novo_produto.to_dict())
 
     return jsonify({"mensagem": "Produto criado com sucesso", "produto_id": str(produto_id.inserted_id)})
 
@@ -220,7 +220,7 @@ def criar_produto():
 @token_required
 def atualizar_produto(produto_id):
     dados = request.json
-    atualizado = AgriculturalProduct.update_product(ObjectId(produto_id), dados)
+    atualizado = Product.update_product(ObjectId(produto_id), dados)
 
     if atualizado.matched_count > 0:
         return jsonify({"mensagem": "Produto atualizado com sucesso"})
@@ -231,7 +231,7 @@ def atualizar_produto(produto_id):
 @main.route('/produtos/<produto_id>', methods=['DELETE'])
 @token_required
 def excluir_produto(produto_id):
-    resultado = AgriculturalProduct.delete_product(ObjectId(produto_id))
+    resultado = Product.delete_product(ObjectId(produto_id))
 
     if resultado.deleted_count > 0:
         return jsonify({"mensagem": "Produto excluído com sucesso"})
@@ -242,7 +242,7 @@ def excluir_produto(produto_id):
 @main.route('/produtos/em_estoque', methods=['GET'])
 @token_required
 def obter_produtos_em_estoque():
-    produtos = AgriculturalProduct.get_products_in_stock()
+    produtos =  Product.get_products_in_stock()
     lista_produtos = []
 
     for produto in produtos:

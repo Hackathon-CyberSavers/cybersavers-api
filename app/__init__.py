@@ -17,7 +17,7 @@ def create_app():
     openai.init_app(app)
 
     # Inicializa o PlantingAssistant com a chave da API de clima
-    from .planting_assistant import PlantingAssistant
+    from .assistant import PlantingAssistant
     assistant = PlantingAssistant(api_key=app.config['WEATHER_API_KEY'])
     
     # Registra as rotas do blueprint
