@@ -11,6 +11,15 @@ from .models import User
 from app.config import Config
 from . import openai
 from assistant import *
+from flask import Flask, request, jsonify
+import openai
+import re
+from config import Config
+from assistant import PlantingAssistant
+
+
+
+
 
 main = Blueprint('main', __name__)
 
@@ -118,7 +127,11 @@ def delete_user(user_id):
 
 
 
-#Matheuzão da uma olhada nas rotas de autenticação de usuário, a maioria lá não tem o @token_required, eu acho que todos tinham que ter
+
+
+
+
+
 # Rotas para autenticação
 @main.route('/login', methods=['POST'])
 def login():
@@ -241,25 +254,84 @@ def obter_produtos_em_estoque():
 
 
 
+
+
+
+
+
 #Rota Chat GPT 
 @main.route('/generate-text', methods=['POST'])
 def generate_text():
-
-    data = request.json
-    msg = data['msg']
-
-    completion = openai.client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system",
-             "content": "Voce é muito legal!"},
-            {"role": "user", "content": msg}
-        ]
-    )
-
-
-
-    return jsonify({'message': completion.choices[0].message.content}),200
+    data = request.get_json()
+    msg = data.get('msg', '')
+    
+    # Inicializar o PlantingAssistant
+    planting_assistant = PlantingAssistant(api_key=app.config['WEATHER_API_KEY'])
+    
+    def is_weather_question(message):
+        weather_keywords = ['clima', 'tempo', 'previsão', 'temperatura', 'como está o tempo', 'como está o clima']
+        message_lower = message.lower()
+        return any(keyword in message_lower for keyword in weather_keywords)
+    
+    def extract_city_from_message(message):
+        match = re.search(r'em ([A-Za-zÀ-ÖØ-öø-ÿ\s]+)', message, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+        else:
+            return None  # Cidade não encontrada
+    
+    if is_weather_question(msg):
+        city = extract_city_from_message(msg)
+        if city:
+            weather_data = planting_assistant.get_weather(city)
+            if weather_data:
+                system_message = (
+                    "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+                    "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção. "
+                    "Use as informações meteorológicas fornecidas para orientar o usuário adequadamente."
+                )
+                user_message = (
+                    f"O usuário perguntou sobre o clima em {weather_data['city']}. "
+                    f"As condições atuais são: {weather_data['weather']} com temperatura de {weather_data['temp']}°C. "
+                    "Forneça conselhos relevantes baseados nessas informações."
+                )
+            else:
+                system_message = (
+                    "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+                    "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
+                )
+                user_message = (
+                    f"Não foi possível obter os dados meteorológicos para a cidade {city}. "
+                    "Por favor, forneça orientações gerais sobre condições climáticas."
+                )
+        else:
+            system_message = (
+                "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+                "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
+            )
+            user_message = (
+                "O usuário perguntou sobre o clima, mas não especificou uma localização válida. "
+                "Peça ao usuário para fornecer o nome da cidade."
+            )
+    else:
+        system_message = (
+            "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+            "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
+        )
+        user_message = msg
+    
+    try:
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
+            ]
+        )
+        response_text = completion.choices[0].message['content']
+        return jsonify({'message': response_text}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 
