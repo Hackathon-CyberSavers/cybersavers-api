@@ -1,7 +1,7 @@
 from .. import mongo
 
 
-class AgriculturalProduct:
+class Product:
     def __init__(self, name, description, price, stock, image_url=None):
         self.name = name
         self.description = description
