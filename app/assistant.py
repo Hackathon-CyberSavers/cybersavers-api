@@ -1,13 +1,20 @@
-from flask import request
-from config import *
+from flask import Flask, request, jsonify
+import openai
+import requests
+from .config import Config
+
+app = Flask(__name__)
+
+# Configuração da chave de API do OpenAI
+openai.api_key = Config.OPENAI_API_KEY
 
 class PlantingAssistant:
     def __init__(self, api_key):
-        self.api_key = Config.WEATHER_API_KEY
+        self.api_key = api_key
 
     def get_weather(self, city):
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={self.api_key}&units=metric"
-        response = request.get(url)
+        response = requests.get(url)
         if response.status_code == 200:
             data = response.json()
             weather = data['weather'][0]['description']
@@ -22,9 +29,9 @@ class PlantingAssistant:
 
     def can_plant(self, temp, weather):
         if temp < 10 or temp > 30:
-            return "A temperatura não está ideal para o plantio."
+            return "A temperatura não está ideal para o plantio, proteja sua plantação."
         elif 'chuva' in weather.lower():
-            return "Não é ideal plantar com chuva."
+            return "Você não precisa regar sua plantação, hoje irá chover."
         else:
             return "Boa condição para plantar."
 
@@ -41,3 +48,5 @@ class PlantingAssistant:
             )
         else:
             return "O pH está adequado."
+
+
