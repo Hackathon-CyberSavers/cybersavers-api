@@ -1,18 +1,18 @@
 import jwt
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from email_validator import validate_email
-from datetime import timedelta
-from datetime import datetime
+from datetime import timedelta, datetime
 from functools import wraps
 from bson import ObjectId
+import re  # Importa a biblioteca de expressões regulares
+
+# Importação de modelos e configurações do seu aplicativo
 from app.models.product import Product
 from .models import User
 from .config import Config
-from . import openai
 from .assistant import PlantingAssistant
-
-
+import openai
 
 
 
@@ -251,28 +251,28 @@ def obter_produtos_em_estoque():
 
 
 
-#Rota Chat GPT 
+main = Blueprint('main', __name__)
+
 @main.route('/generate-text', methods=['POST'])
 def generate_text():
     data = request.json
     msg = data["msg"]
-    print (data,msg)
-    
-    # Inicializar o PlantingAssistant
-    planting_assistant = PlantingAssistant(api_key=Config['WEATHER_API_KEY'])
-    
+
+    # Inicializar o PlantingAssistant com a chave da API de configuração
+    planting_assistant = PlantingAssistant(api_key=current_app.config.get('WEATHER_API_KEY'))
+
     def is_weather_question(message):
         weather_keywords = ['clima', 'tempo', 'previsão', 'temperatura', 'como está o tempo', 'como está o clima']
         message_lower = message.lower()
         return any(keyword in message_lower for keyword in weather_keywords)
-    
+
     def extract_city_from_message(message):
         match = re.search(r'em ([A-Za-zÀ-ÖØ-öø-ÿ\s]+)', message, re.IGNORECASE)
         if match:
             return match.group(1).strip()
         else:
             return None  # Cidade não encontrada
-    
+
     if is_weather_question(msg):
         city = extract_city_from_message(msg)
         if city:
@@ -312,19 +312,17 @@ def generate_text():
             "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
         )
         user_message = msg
-    
+
     try:
-        completion = openai.ChatCompletion.create(
+        # Criação da completude da conversa usando a nova API
+        response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ]
         )
-        response_text = completion.choices[0].message['content']
+        response_text = response.choices[0].message['content']
         return jsonify({'message': response_text}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-    return jsonify({'message': completion.choices[0].message.content}),200
