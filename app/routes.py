@@ -9,7 +9,6 @@ from bson import ObjectId
 from app.models.product import Product
 from .models import User
 from .config import Config
-from . import openai
 from .assistant import PlantingAssistant
 
 
@@ -235,7 +234,7 @@ def excluir_produto(produto_id):
 @main.route('/produtos/em_estoque', methods=['GET'])
 @token_required
 def obter_produtos_em_estoque():
-    produtos = lProduct.get_products_in_stock()
+    produtos = Product.get_products_in_stock()
     lista_produtos = []
 
     for produto in produtos:
