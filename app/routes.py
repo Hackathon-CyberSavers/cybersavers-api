@@ -1,4 +1,6 @@
 import jwt
+import re
+import google.generativeai as genai
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, jsonify, request
 from email_validator import validate_email
@@ -12,10 +14,13 @@ from .config import Config
 from .assistant import PlantingAssistant
 
 
-
-
-
 main = Blueprint('main', __name__)
+
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash',
+    system_instruction="You are an assistant who helps farmers with their general questions about their farms, such as: questions about pH and planting tips. Your name is Tanica"
+)
+
 
 # Decoradores
 def token_required(f):
@@ -258,7 +263,7 @@ def generate_text():
     print (data,msg)
     
     # Inicializar o PlantingAssistant
-    planting_assistant = PlantingAssistant(api_key=Config['WEATHER_API_KEY'])
+    planting_assistant = PlantingAssistant()
     
     def is_weather_question(message):
         weather_keywords = ['clima', 'tempo', 'previsão', 'temperatura', 'como está o tempo', 'como está o clima']
@@ -313,17 +318,18 @@ def generate_text():
         user_message = msg
     
     try:
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
-            ]
-        )
-        response_text = completion.choices[0].message['content']
-        return jsonify({'message': response_text}), 200
+        completion =model.generate_content(msg)
+        
+        return jsonify({'message': completion.text, "data": completion}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-    return jsonify({'message': completion.choices[0].message.content}),200
+@main.route('/generate-text-2', methods=['POST'])
+def generate_text_2():
+    data = request.json
+    msg = data["msg"]
+    
+    response = model.generate_content(msg).to_dict()
+    
+    return jsonify({'message': response['candidates'][0]['content']['parts'][0]['text']}), 200

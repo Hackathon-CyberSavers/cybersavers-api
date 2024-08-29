@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify
 from .config import Config
 
 class PlantingAssistant:
-    def __init__(self, api_key):
-        self.api_key = api_key
+    def __init__(self):
+        self.api_key = Config.WEATHER_API_KEY
 
     def get_weather(self, city):
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={self.api_key}&units=metric"
