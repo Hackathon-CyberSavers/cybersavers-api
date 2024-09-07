@@ -7,8 +7,7 @@ class Message:
         self.role = role,
         self.user_id = user_id,
         self.created_at = datetime.now()
-    
-    # Função para criar uma instância da classe User
+
     @staticmethod
     def from_dict(data):
         return Message(
@@ -18,7 +17,6 @@ class Message:
             created_at=data.get("created_at"),
         )
     
-    # Função para transformar o objeto User em um dicionário
     def to_dict(self):
         return {
             "message": self.message,
@@ -36,6 +34,6 @@ class Message:
         return mongo.db.messages.insert_one(message_data)
     
     @staticmethod
-    def delete_message(user_id):
+    def delete_chat_by_user_id(user_id):
         return mongo.db.messages.delete_many({"user_id": user_id})
 

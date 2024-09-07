@@ -12,13 +12,18 @@ from app.models.product import Product
 from .models import User
 from .config import Config
 from .assistant import PlantingAssistant
+from .models import Message
 
 
 main = Blueprint('main', __name__)
 
 model = genai.GenerativeModel(
     model_name='gemini-1.5-flash',
-    system_instruction="You are an assistant who helps farmers with their general questions about their farms, such as: questions about pH and planting tips. Your name is Tanica"
+    system_instruction="You are an assistant who helps farmers with their general questions about their farms, such as: questions about pH and planting tips. Your name is Tanica. Max 500 chars.",
+    generation_config={
+        'temperature': 0.87
+    }
+    
 )
 
 
@@ -326,10 +331,53 @@ def generate_text():
 
 
 @main.route('/llm/text', methods=['POST'])
-def generate_text_2():
+@token_required
+def generate_text_2(data_user):
     data = request.json
     msg = data["msg"]
+
+    planting_assistant = PlantingAssistant()
+
+    city = data_user.get("city") 
+    user_name = data_user.get("name") 
+    user_id = data_user.get("_id")
+
+    history = Message.get_all_chat_by_user_id(user_id)
+ 
+    chat_history = []
+    if history:
+        for message in history:
+            chat_history.append({
+                "role": message["role"],
+                "parts": message["parts"]
+            })
+
+    weather_data = planting_assistant.get_weather(city)
+    weather_data['user_name'] = user_name
+
+
+    prompt_to_llm = (f"You must answer the user's question that will be left after: [USER MESSAGE]. To answer the user's question, use this data [DATA] to provide the most accurate answer possible. In addition, check the conversation history to maintain cohesion.\n"
+                     f"[DATA]\n{weather_data}\n[USER MESSAGE]\n{msg}")
     
-    response = model.generate_content(msg).to_dict()
-    
+    chat = model.start_chat(history=chat_history)
+
+    response = chat.send_message(prompt_to_llm).to_dict()
+
+    user_msg = {
+        "user_id": user_id,
+        "role": "user",
+        "parts": msg,
+        "created_at": datetime.now()
+    }
+    Message.create_message(user_msg)
+
+    model_msg = {
+        "user_id": user_id,
+        "role": "model",
+        "parts": response['candidates'][0]['content']['parts'][0]['text'],
+        "created_at": datetime.now()
+    }
+    Message.create_message(model_msg)
+
+
     return jsonify({'message': response['candidates'][0]['content']['parts'][0]['text']}), 200
