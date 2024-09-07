@@ -325,7 +325,7 @@ def generate_text():
         return jsonify({'error': str(e)}), 500
 
 
-@main.route('/generate-text-2', methods=['POST'])
+@main.route('/llm/text', methods=['POST'])
 def generate_text_2():
     data = request.json
     msg = data["msg"]
