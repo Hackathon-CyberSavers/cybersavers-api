@@ -19,11 +19,10 @@ main = Blueprint('main', __name__)
 
 model = genai.GenerativeModel(
     model_name='gemini-1.5-flash',
-    system_instruction="You are an assistant who helps farmers with their general questions about their farms, such as: questions about pH and planting tips. Your name is Tanica. Max 500 chars.",
+    system_instruction="You are a helper who helps farmers with general questions about their farms, such as: questions about pH and planting tips. Your name is Tanica. Max. 500 characters. Do not answer things outside the scope that was given to you. Speak in Brazillian Portuguese",
     generation_config={
         'temperature': 0.87
     }
-    
 )
 
 
@@ -379,5 +378,6 @@ def generate_text_2(data_user):
     }
     Message.create_message(model_msg)
 
+    full_chat = Message.get_all_chat_by_user_id(user_id)
 
-    return jsonify({'message': response['candidates'][0]['content']['parts'][0]['text']}), 200
+    return jsonify({'data': full_chat}), 200
