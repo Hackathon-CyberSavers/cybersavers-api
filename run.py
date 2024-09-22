@@ -6,4 +6,4 @@ dbg = True if Config.DEBUG == '1' else False
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=dbg)
+    app.run(debug=dbg,host="0.0.0.0", port=5000)
