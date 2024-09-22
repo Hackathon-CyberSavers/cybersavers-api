@@ -1,5 +1,5 @@
 from .. import mongo
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Message:
     def __init__(self, message, role, user_id):
@@ -27,7 +27,14 @@ class Message:
     
     @staticmethod
     def get_all_chat_by_user_id(user_id):
-        return mongo.db.messages.find({"user_id": user_id}, {"_id": 0, "created_at": 0}).sort({"created_at": 1})
+        thirty_minutes_ago = datetime.now() - timedelta(minutes=30)
+        cursor = mongo.db.messages.find(
+            {"user_id": user_id, "created_at": {"$gte": thirty_minutes_ago}},
+            {"_id": 0, "user_id": 0}
+        ).sort("created_at", 1)
+
+        messages = list(cursor)
+        return messages
     
     @staticmethod
     def create_message(message_data):
