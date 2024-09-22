@@ -12,7 +12,7 @@ class Product:
     # Função para criar uma instância da classe AgriculturalProduct a partir de um dicionário.
     @staticmethod
     def from_dict(data):
-        return AgriculturalProduct(
+        return Product(
             name=data.get("name"),
             description=data.get("description"),
             price=data.get("price"),

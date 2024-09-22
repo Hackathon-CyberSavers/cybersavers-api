@@ -1,11 +1,12 @@
 from .. import mongo
 
 class User:
-    def __init__(self, name, last_name, email, password):
+    def __init__(self, name, last_name, email, password, city):
         self.name = name
         self.last_name = last_name
         self.email = email
-        self.password = password
+        self.password = password,
+        self.city = city
     
     # Função para criar uma instância da classe User
     @staticmethod
@@ -14,7 +15,8 @@ class User:
             name=data.get("name"),
             last_name=data.get("last_name"),
             email=data.get("email"),
-            password=data.get("password")
+            password=data.get("password"),
+            city=data.get("city")
         )
     
     # Função para transformar o objeto User em um dicionário
@@ -23,7 +25,8 @@ class User:
             "name": self.name,
             "email": self.email,
             "last_name": self.last_name,
-            "password": self.password
+            "password": self.password,
+            "city": self.city
         }
 
     @staticmethod

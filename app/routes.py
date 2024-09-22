@@ -1,4 +1,6 @@
 import jwt
+import re
+import google.generativeai as genai
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, jsonify, request
 from email_validator import validate_email
@@ -8,11 +10,21 @@ from functools import wraps
 from bson import ObjectId
 from app.models.product import Product
 from .models import User
-from app.config import Config
-from . import openai
-from assistant import *
+from .config import Config
+from .assistant import PlantingAssistant
+from .models import Message
+
 
 main = Blueprint('main', __name__)
+
+model = genai.GenerativeModel(
+    model_name='gemini-1.5-flash',
+    system_instruction="You are a helper who helps farmers with general questions about their farms, such as: questions about pH and planting tips. Your name is Tanica. Max. 500 characters. Do not answer things outside the scope that was given to you. Speak in Brazillian Portuguese",
+    generation_config={
+        'temperature': 0.87
+    }
+)
+
 
 # Decoradores
 def token_required(f):
@@ -37,7 +49,6 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     
     return decorated
-
 
 
 
@@ -118,7 +129,12 @@ def delete_user(user_id):
 
 
 
-#Matheuzão da uma olhada nas rotas de autenticação de usuário, a maioria lá não tem o @token_required, eu acho que todos tinham que ter
+
+
+
+
+
+
 # Rotas para autenticação
 @main.route('/login', methods=['POST'])
 def login():
@@ -165,13 +181,11 @@ def login():
 
 
 
-
-
 # Rota para obter todos os produtos
 @main.route('/produtos', methods=['GET'])
 @token_required
 def obter_produtos():
-    produtos = AgriculturalProduct.get_all_products()
+    produtos = Product.get_all_products()
     lista_produtos = []
 
     for produto in produtos:
@@ -184,7 +198,7 @@ def obter_produtos():
 @main.route('/produtos/<produto_id>', methods=['GET'])
 @token_required
 def obter_produto(produto_id):
-    produto = AgriculturalProduct.get_product_by_id(ObjectId(produto_id))
+    produto = Product.get_product_by_id(ObjectId(produto_id))
 
     if produto:
         produto['_id'] = str(produto['_id'])
@@ -197,8 +211,8 @@ def obter_produto(produto_id):
 @token_required
 def criar_produto():
     dados = request.json
-    novo_produto = AgriculturalProduct.from_dict(dados)
-    produto_id = AgriculturalProduct.create_product(novo_produto.to_dict())
+    novo_produto = Product.from_dict(dados)
+    produto_id = Product.create_product(novo_produto.to_dict())
 
     return jsonify({"mensagem": "Produto criado com sucesso", "produto_id": str(produto_id.inserted_id)})
 
@@ -207,7 +221,7 @@ def criar_produto():
 @token_required
 def atualizar_produto(produto_id):
     dados = request.json
-    atualizado = AgriculturalProduct.update_product(ObjectId(produto_id), dados)
+    atualizado = Product.update_product(ObjectId(produto_id), dados)
 
     if atualizado.matched_count > 0:
         return jsonify({"mensagem": "Produto atualizado com sucesso"})
@@ -218,7 +232,7 @@ def atualizar_produto(produto_id):
 @main.route('/produtos/<produto_id>', methods=['DELETE'])
 @token_required
 def excluir_produto(produto_id):
-    resultado = AgriculturalProduct.delete_product(ObjectId(produto_id))
+    resultado = Product.delete_product(ObjectId(produto_id))
 
     if resultado.deleted_count > 0:
         return jsonify({"mensagem": "Produto excluído com sucesso"})
@@ -229,7 +243,7 @@ def excluir_produto(produto_id):
 @main.route('/produtos/em_estoque', methods=['GET'])
 @token_required
 def obter_produtos_em_estoque():
-    produtos = AgriculturalProduct.get_products_in_stock()
+    produtos = Product.get_products_in_stock()
     lista_produtos = []
 
     for produto in produtos:
@@ -241,65 +255,129 @@ def obter_produtos_em_estoque():
 
 
 
+
+
+
+
 #Rota Chat GPT 
 @main.route('/generate-text', methods=['POST'])
 def generate_text():
-
     data = request.json
-    msg = data['msg']
-
-    completion = openai.client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system",
-             "content": "Voce é muito legal!"},
-            {"role": "user", "content": msg}
-        ]
-    )
-
-
-
-    return jsonify({'message': completion.choices[0].message.content}),200
-
-
-
+    msg = data["msg"]
+    print (data,msg)
     
-
-
-
-
-
-
+    # Inicializar o PlantingAssistant
+    planting_assistant = PlantingAssistant()
+    
+    def is_weather_question(message):
+        weather_keywords = ['clima', 'tempo', 'previsão', 'temperatura', 'como está o tempo', 'como está o clima']
+        message_lower = message.lower()
+        return any(keyword in message_lower for keyword in weather_keywords)
+    
+    def extract_city_from_message(message):
+        match = re.search(r'em ([A-Za-zÀ-ÖØ-öø-ÿ\s]+)', message, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+        else:
+            return None  # Cidade não encontrada
+    
+    if is_weather_question(msg):
+        city = extract_city_from_message(msg)
+        if city:
+            weather_data = planting_assistant.get_weather(city)
+            if weather_data:
+                system_message = (
+                    "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+                    "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção. "
+                    "Use as informações meteorológicas fornecidas para orientar o usuário adequadamente."
+                )
+                user_message = (
+                    f"O usuário perguntou sobre o clima em {weather_data['city']}. "
+                    f"As condições atuais são: {weather_data['weather']} com temperatura de {weather_data['temp']}°C. "
+                    "Forneça conselhos relevantes baseados nessas informações."
+                )
+            else:
+                system_message = (
+                    "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+                    "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
+                )
+                user_message = (
+                    f"Não foi possível obter os dados meteorológicos para a cidade {city}. "
+                    "Por favor, forneça orientações gerais sobre condições climáticas."
+                )
+        else:
+            system_message = (
+                "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+                "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
+            )
+            user_message = (
+                "O usuário perguntou sobre o clima, mas não especificou uma localização válida. "
+                "Peça ao usuário para fornecer o nome da cidade."
+            )
+    else:
+        system_message = (
+            "Você é um fazendeiro profissional com conhecimento profundo sobre técnicas de plantio, "
+            "melhores práticas agrícolas, gestão de solo e clima, e otimização da produção."
+        )
+        user_message = msg
+    
+    try:
+        completion =model.generate_content(msg)
         
-'''
+        return jsonify({'message': completion.text, "data": completion}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-'''
 
-# Rotas para o assistente
-# @main.route('/weather', methods=['GET'])
-# def weather():
-#     city = request.args.get('city')
-#     if not city:
-#         flash('Por favor, insira o nome da cidade.')
-#         return redirect(url_for('home'))
+@main.route('/llm/text', methods=['POST'])
+@token_required
+def generate_text_2(data_user):
+    data = request.json
+    msg = data["msg"]
+
+    planting_assistant = PlantingAssistant()
+
+    city = data_user.get("city") 
+    user_name = data_user.get("name") 
+    user_id = data_user.get("_id")
+
+    history = Message.get_all_chat_by_user_id(user_id)
+ 
+    chat_history = []
+    if history:
+        for message in history:
+            chat_history.append({
+                "role": message["role"],
+                "parts": message["parts"]
+            })
+
+    weather_data = planting_assistant.get_weather(city)
+    weather_data['user_name'] = user_name
+
+
+    prompt_to_llm = (f"You must answer the user's question that will be left after: [USER MESSAGE]. To answer the user's question, use this data [DATA] to provide the most accurate answer possible. In addition, check the conversation history to maintain cohesion.\n"
+                     f"[DATA]\n{weather_data}\n[USER MESSAGE]\n{msg}")
     
-#     weather_data = assistant.get_weather(city)
-#     if "error" in weather_data:
-#         flash(weather_data["error"])
-#         return redirect(url_for('home'))
-    
-#     planting_advice = assistant.can_plant(weather_data["temp"], weather_data["weather"])
-#     return render_template('weather.html', weather_data=weather_data, planting_advice=planting_advice)
+    chat = model.start_chat(history=chat_history)
 
-# @main.route('/check_ph', methods=['POST'])
-# def check_ph():
-#     try:
-#         ph_level = float(request.form.get('ph'))
-#     except ValueError:
-#         flash('Por favor, insira um valor numérico válido para o pH.')
-#         return redirect(url_for('home'))
-    
-#     advice = assistant.check_ph(ph_level)
-#     return render_template('ph.html', ph_level=ph_level, advice=advice)
+    response = chat.send_message(prompt_to_llm).to_dict()
 
+    user_msg = {
+        "user_id": user_id,
+        "role": "user",
+        "parts": msg,
+        "created_at": datetime.now()
+    }
+    Message.create_message(user_msg)
 
+    model_msg = {
+        "user_id": user_id,
+        "role": "model",
+        "parts": response['candidates'][0]['content']['parts'][0]['text'],
+        "created_at": datetime.now()
+    }
+    Message.create_message(model_msg)
+
+    full_chat = Message.get_all_chat_by_user_id(user_id)
+
+    return jsonify({'data': full_chat}), 200
