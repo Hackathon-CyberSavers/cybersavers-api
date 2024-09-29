@@ -17,22 +17,24 @@ Funcionalidades
     copilot
 
 ## Estrutura do Projeto
-- CyberSavers/
-  - app/
-    - __init__.py - Inicialização da aplicação
-    - assistant.py - Assistente para processamento de dados agrícolas
-    - commodity_price.py - Módulo de preços de commodities
-    - config.py - Configurações globais do projeto
-    - routes.py - Definição das rotas e APIs da aplicação
-    - models/
-      - __init__.py - Inicialização do módulo de modelos
-  - .env-example - Exemplo de variáveis de ambiente
-  - .gitignore - Arquivo para exclusão de arquivos no Git
-  - gmail_cybersavers.txt - Detalhes para a configuração do Gmail no projeto
-  - readme - Arquivo README (atual)
-  - requirements.txt - Lista de dependências do projeto
-  - run.py - Arquivo principal para execução do aplicativo
+```bash
+CyberSavers/
+├── app/
+│   ├── __init__.py                 # Inicialização da aplicação
+│   ├── assistant.py                # Assistente para processamento de dados agrícolas
+│   ├── commodity_price.py          # Módulo de preços de commodities
+│   ├── config.py                   # Configurações globais do projeto
+│   ├── routes.py                   # Definição das rotas e APIs da aplicação
+│   └── models/                     # Modelos de dados para o banco de dados
+│       └── __init__.py             # Inicialização do módulo de modelos
+├── .env-example                    # Exemplo de variáveis de ambiente
+├── .gitignore                      # Arquivo para exclusão de arquivos no Git
+├── gmail_cybersavers.txt           # Detalhes para a configuração do Gmail no projeto
+├── readme                          # Arquivo README (atual)
+├── requirements.txt                # Lista de dependências do projeto
+└── run.py                          # Arquivo principal para execução do aplicativo
 
+```
 
 ## Como rodar a aplicação
 
